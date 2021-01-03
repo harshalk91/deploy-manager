@@ -1,9 +1,11 @@
 from database import database
-from app import logger
+from wsgi import logger
 from python_terraform import *
 from jinja2 import Template
 import os
 from shutil import copyfile
+import subprocess
+import time
 
 
 def getCloudCredentials(cloud_provider):
@@ -33,11 +35,16 @@ def jinjaLoader(template_data):
     return newfile
 
 
-def createInstance(tfvars_file):
-    # tf = Terraform(working_dir=os.path.join(os.getcwd(), "terraform/"))
-    # auto_approve = {"auto-approve": True}
-    # tf.apply(refresh=False)
-    return "In Progress"
+def createInstance():
+    command = "sh " + os.getcwd() + "/scripts/create-instance.sh " + os.path.join(os.getcwd(), "terraform") + " >> " + os.path.join(os.getcwd()) + "/deploymanager " + "2>&1"
+    logger.debug(command)
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process.wait()
+    output, error = process.communicate()
+    logger.debug(StringIO(output))
+    tf_state = subprocess.check_output(["sh", + os.getcwd() + "/scripts/read-state.sh", os.path.join(os.getcwd(), "terraform")])
+    logger.debug(tf_state)
+    return tf_state
 
 
 def triggerDeployment(deployment_name, template, instance_count, cloud_credentials):
@@ -49,15 +56,16 @@ def triggerDeployment(deployment_name, template, instance_count, cloud_credentia
             "aws_region": cloud_credentials[0]['aws_region'],
             "ami": cloud_credentials[0]['ami'],
             "instance_count": instance_count,
-            "instance_type": template,
-            "key_name": "jumpbox-kepair.pem",
+            "instance_type": cloud_credentials[0]['template'][template],
+            "key_name": "jumpbox-kepair",
             "subnet_id": "subnet-022ab974e8cce7e1d",
             "security_group_id": "sg-0639f1fc8e91af47e"
         }
         tfvars_file = jinjaLoader(template_data)
         if os.path.exists(tfvars_file):
             logger.debug("Instance Creation Triggered")
-            return createInstance(tfvars_file)
+            instance_creation_status = createInstance()
+            return instance_creation_status
         else:
             logger.error("Error!! File Does Not exist" )
             return "Error"

@@ -1,19 +1,19 @@
-import logging
+import logger
 from flask import Flask, render_template, request
 from database import database
 from utils import get_uuid, get_current_timestamp
 from flask_api import status
-import workflow
+from workflow import *
 
-logging.basicConfig(
-    filename="deploymanager",
-    filemode='a',
-    level=logging.DEBUG,
-    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-)
-logging.info("Started...")
-logger = logging.getLogger(__name__)
+#logging.basicConfig(
+#    filename="deploymanager",
+#    filemode='a',
+#    level=logging.DEBUG,
+#    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+#    datefmt='%Y-%m-%d %H:%M:%S',
+#)
+#logging.info("Started...")
+#logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 
@@ -53,15 +53,16 @@ def createDeployment():
         database.initialize()
         result = database.insert(collection, data)
         logger.debug(result)
-        cloud_credentials = workflow.getCloudCredentials(data['cloud_provider'])
-        res = workflow.triggerDeployment(data['name'],
+        cloud_credentials = getCloudCredentials(data['cloud_provider'])
+        res = triggerDeployment(data['name'],
                                          data['template'],
                                          data['instance_count'],
                                          cloud_credentials)
-        if not str(data['deployment_id']) or res == "Error":
-            return status.HTTP_500_INTERNAL_SERVER_ERROR
-        else:
-            return res, status.HTTP_201_CREATED
+        return res
+        #if not str(data['deployment_id']) or res == "Error":
+        #    return status.HTTP_500_INTERNAL_SERVER_ERROR
+        #else:
+        #    return res, status.HTTP_201_CREATED
 
 
 @app.route("/status", methods=['GET'])
@@ -85,5 +86,5 @@ def get_deployment_status():
                                    result=result)
 
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5005, debug=True)
+#if __name__ == '__main__':
+#    app.run(host="0.0.0.0", port=5005, debug=True)
