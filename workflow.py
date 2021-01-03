@@ -33,25 +33,34 @@ def jinjaLoader(template_data):
     return newfile
 
 
+def createInstance(tfvars_file):
+    # tf = Terraform(working_dir=os.path.join(os.getcwd(), "terraform/"))
+    # auto_approve = {"auto-approve": True}
+    # tf.apply(refresh=False)
+    return "In Progress"
+
+
 def triggerDeployment(deployment_name, template, instance_count, cloud_credentials):
     try:
         logger.debug("Triggering deployment for %s", deployment_name)
         template_data = {
             "aws_access_key": cloud_credentials[0]['aws_access_key'],
             "aws_secret_key": cloud_credentials[0]['aws_secret_key'],
-            "aws_region": "ap-south-1",
-            "ami": "ami-0e306788ff2473ccb",
+            "aws_region": cloud_credentials[0]['aws_region'],
+            "ami": cloud_credentials[0]['ami'],
             "instance_count": instance_count,
             "instance_type": template,
-            "key_name": "test-key",
+            "key_name": "jumpbox-kepair.pem",
             "subnet_id": "subnet-022ab974e8cce7e1d",
             "security_group_id": "sg-0639f1fc8e91af47e"
         }
         tfvars_file = jinjaLoader(template_data)
         if os.path.exists(tfvars_file):
-            t = Terraform()
-            return_code, stdout, stderr = t.apply()
+            logger.debug("Instance Creation Triggered")
+            return createInstance(tfvars_file)
+        else:
+            logger.error("Error!! File Does Not exist" )
+            return "Error"
 
-        return template_data
     except Exception as e:
         return "Error"

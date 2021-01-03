@@ -40,7 +40,7 @@ def getDeployments():
 
 @app.route("/createdeployment", methods=['POST'])
 def createDeployment():
-    if request.method == "POST" and request.is_json:
+    if request.method == "POST":
         logger.debug("Request Came for inserting data")
         data = request.get_json()
         data['start_time'] = get_current_timestamp()
