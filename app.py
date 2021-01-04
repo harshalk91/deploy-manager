@@ -1,19 +1,19 @@
-import logger
+import logging
 from flask import Flask, render_template, request
 from database import database
 from utils import get_uuid, get_current_timestamp
 from flask_api import status
 from workflow import *
 
-#logging.basicConfig(
-#    filename="deploymanager",
-#    filemode='a',
-#    level=logging.DEBUG,
-#    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
-#    datefmt='%Y-%m-%d %H:%M:%S',
-#)
-#logging.info("Started...")
-#logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename="deploymanager",
+    filemode='a',
+    level=logging.DEBUG,
+    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+logging.info("Started...")
+logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 
@@ -86,5 +86,5 @@ def get_deployment_status():
                                    result=result)
 
 
-#if __name__ == '__main__':
-#    app.run(host="0.0.0.0", port=5005, debug=True)
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5005, debug=True)

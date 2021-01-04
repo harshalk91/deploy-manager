@@ -1,5 +1,5 @@
 from database import database
-from wsgi import logger
+from app import logger
 from python_terraform import *
 from jinja2 import Template
 import os
