@@ -1,5 +1,5 @@
-flask_api
 flask
-pymongo
-python_terraform
 celery
+flask_api
+pymongo
+pythoddn_terraform

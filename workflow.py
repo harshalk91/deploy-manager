@@ -1,11 +1,23 @@
 from database import database
-from app import logger
+#from app import logger
+import logging
 from python_terraform import *
 from jinja2 import Template
 import os
 from shutil import copyfile
 import subprocess
 import time
+from database import database
+
+logging.basicConfig(
+    filename="deploymanager",
+    filemode='a',
+    level=logging.DEBUG,
+    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+logging.info("Started...")
+logger = logging.getLogger(__name__)
 
 
 def getCloudCredentials(cloud_provider):
@@ -47,8 +59,9 @@ def createInstance():
     return tf_state
 
 
-def triggerDeployment(deployment_name, template, instance_count, cloud_credentials):
+def triggerDeployment(deployment_name, template, instance_count, cloud_credentials, collection, deployment_id):
     try:
+        database.initailiza()
         logger.debug("Triggering deployment for %s", deployment_name)
         template_data = {
             "aws_access_key": cloud_credentials[0]['aws_access_key'],
@@ -63,8 +76,12 @@ def triggerDeployment(deployment_name, template, instance_count, cloud_credentia
         }
         tfvars_file = jinjaLoader(template_data)
         if os.path.exists(tfvars_file):
-            logger.debug("Instance Creation Triggered")
             instance_creation_status = createInstance()
+            
+            newvalues = '{"deployment_id": deployment_id}, {$set: {"status": "Instance Creation Started"}}'
+            database.updateDeployment(collection, newvalues)
+
+            #database.updateDeployment(collection, query={"deployment_id": deployment_id, {$set: {"status": "Instance Creation Started"}}))
             return instance_creation_status
         else:
             logger.error("Error!! File Does Not exist" )
