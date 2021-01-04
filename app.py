@@ -1,5 +1,5 @@
 import logging
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 from database import database
 from utils import get_uuid, get_current_timestamp
 from flask_api import status
@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.config.update(
     CELERY_BROKER_URL='redis://localhost:6379',
-    CELERY_RESULT_BACKEND='redis://localhost:6379'
+    CELERY_RESULT_BACKEND='redis://localhost:6379',
+    CELERY_TASK_SERIALIZER = 'json',
+    CELERY_RESULT_SERIALIZER = 'json'
 )
 celery = make_celery(app)
 celery_trigger_deployment = make_celery(app)
@@ -66,17 +68,13 @@ def createDeployment():
         database.initialize()
         time.sleep(1)
         result = database.getData(collection, query)
-        cloud_credentials = getCloudCredentials(data['cloud_provider'])
-        logger.debug("Triggering Async Task to create deployment)"
-        celeryTriggerDeployment.delay(data['name'],
-                          data['template'],
-                          data['instance_count'],
-                          cloud_credentials,
-                          collection,
-                          data['deployment_id'])
+        #cloud_credentials = getCloudCredentials(data['cloud_provider'])
+        logger.debug("Triggering Async Task to create deployment")
+        celeryTriggerDeployment.apply_async(args=[data['name'], data['template'], data['instance_count'], collection, data['deployment_id'], data['cloud_provider']], countdown=5, expires=180)
         #if not str(data['deployment_id']) or res == "Error":
         #    return status.HTTP_500_INTERNAL_SERVER_ERROR
         #else:
+        #return redirect('/status?deployment_id=', data['deployment_id'])
         return render_template('show_deployments.html',
                                 title='overview',
                                 result=result), status.HTTP_200_OK
@@ -88,10 +86,42 @@ def insertToDB(collection, data):
     database.initialize()
     database.insert(collection, data)
 
-@celery.task(name='celery_example.celery_trigger_deployment')
-def celeryTriggerDeployment(name, template, instance_count, cloud_credentials, collection, deployment_id):
+@celery.task(name='celery_example.celery_trigger_deployment', serializer='json')
+def celeryTriggerDeployment(name, template, instance_count, collection, deployment_id, cloud_provider):
     logger.debug("Async Task Started for Trigerring Deployment")
-    triggerDeployment(name, template, instance_count, cloud_credentials, collection, deployment_id)
+    database.initialize()
+    logger.debug("Database initialized")
+    cloud_credentials = getCloudCredentials(cloud_provider)
+    logger.debug(cloud_credentials)
+    logger.debug("Triggering deployment for %s", name)
+    template_data = {
+            "aws_access_key": cloud_credentials[0]['aws_access_key'],
+            "aws_secret_key": cloud_credentials[0]['aws_secret_key'],
+            "aws_region": cloud_credentials[0]['aws_region'],
+            "ami": cloud_credentials[0]['ami'],
+            "instance_count": instance_count,
+            "instance_type": cloud_credentials[0]['template'][template],
+            "key_name": "jumpbox-kepair",
+            "subnet_id": "subnet-022ab974e8cce7e1d",
+            "security_group_id": "sg-0639f1fc8e91af47e"
+        }
+    tfvars_file = jinjaLoader(template_data)
+    logger.debug(tfvars_file)
+    if os.path.exists(tfvars_file):
+        terraform_dir = os.path.join(os.getcwd() + "/terraform")
+        logger.debug("Instance Created Started")
+        createInstancetf(terraform_dir)
+
+        newvalues = '{"deployment_id": deployment_id}, {$set: {"status": "Instance Creation Started"}}'
+        database.updateDeployment(collection, newvalues)
+        logger.debug("DB Updated and deployment status changed")
+        #database.updateDeployment(collection, query={"deployment_id": deployment_id, {$set: {"status": "Instance Creation Started"}}))
+        return instance_creation_status
+    else:
+        logger.error("Error!! File Does Not exist" )
+        return "Error"
+
+    #triggerDeployment(name, template, instance_count, collection, deployment_id, cloud_provider)
 
 
 @app.route("/status", methods=['GET'])

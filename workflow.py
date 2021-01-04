@@ -10,7 +10,7 @@ import time
 from database import database
 
 logging.basicConfig(
-    filename="deploymanager",
+    filename="deploymanager-workflow",
     filemode='a',
     level=logging.DEBUG,
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
@@ -53,15 +53,33 @@ def createInstance():
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     process.wait()
     output, error = process.communicate()
-    logger.debug(StringIO(output))
-    tf_state = subprocess.check_output(["sh", + os.getcwd() + "/scripts/read-state.sh", os.path.join(os.getcwd(), "terraform")])
-    logger.debug(tf_state)
-    return tf_state
+    logger.debug(output)
+    #command = "sh " + os.getcwd() + "/scripts/read-state,sh " + os.path.join(os.getcwd(), "terraform")
+    #tf_state = subprocess.check_output(["sh", + os.getcwd() + "/scripts/read-state.sh", os.path.join(os.getcwd(), "terraform")])
+    #logger.debug(tf_state)
+    #return tf_state
+
+def createInstancetf(terraform_path):
+    tf = Terraform(working_dir=terraform_path)
+    
+    tf_init = tf.init()
+    logger.debug(tf_init)
+    
+    tf_plan = tf.plan()
+    logger.debug(tf_plan)
 
 
-def triggerDeployment(deployment_name, template, instance_count, cloud_credentials, collection, deployment_id):
+    tf_apply = tf.apply(no_color=IsFlagged, refresh=False, skip_plan=True)
+    logger.debug(tf_apply)
+
+
+def triggerDeployment(deployment_name, template, instance_count, collection, deployment_id, cloud_provider):
     try:
-        database.initailiza()
+        logger.debug("Inside triggerDeployment")
+        database.initailize()
+        logger.debug("Database initialized")
+        cloud_credentials = getCloudCredentials(cloud_provider)        
+        logger.debug(cloud_credentials)
         logger.debug("Triggering deployment for %s", deployment_name)
         template_data = {
             "aws_access_key": cloud_credentials[0]['aws_access_key'],
@@ -75,12 +93,14 @@ def triggerDeployment(deployment_name, template, instance_count, cloud_credentia
             "security_group_id": "sg-0639f1fc8e91af47e"
         }
         tfvars_file = jinjaLoader(template_data)
+        logger.debug(tfvars_file)
         if os.path.exists(tfvars_file):
             instance_creation_status = createInstance()
-            
+            logger.debug(tfvars_file)
             newvalues = '{"deployment_id": deployment_id}, {$set: {"status": "Instance Creation Started"}}'
             database.updateDeployment(collection, newvalues)
 
+            logger.debug("DB Updated and deployment status changed")
             #database.updateDeployment(collection, query={"deployment_id": deployment_id, {$set: {"status": "Instance Creation Started"}}))
             return instance_creation_status
         else:
