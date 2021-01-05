@@ -1,5 +1,5 @@
 from database import database
-#from app import logger
+# from app import logger
 import logging
 from python_terraform import *
 from jinja2 import Template
@@ -47,41 +47,46 @@ def jinjaLoader(template_data):
     return newfile
 
 
-
 def createInstancetf(terraform_path, collection, deployment_id):
     try:
-       database.initialize()
-       deploy_id = { "deployment_id": deployment_id }
+        database.initialize()
+        deploy_id = {"deployment_id": deployment_id}
 
-       tf = Terraform(working_dir=terraform_path)
-    
-       return_code, stdout, stderr = tf.init()
-       if stderr:
-          query = {"$set": {'status': 'Terraform Initialization Failed'}}
-          database.updateone(collection, deploy_id, query) 
-          logger.debug(stderr)
-          raise ValueError('Terraform Initialization Failed')
-             
-       
-       return_code, stdout, stderr = tf.plan()
-       if stderr:
-          query = {"$set": {'status': 'Terraform Plan Failed'}}
-          database.updateone(collection, deploy_id, query)
-          logger.debug(stderr)
-          raise ValueError('Terraform Plan Failed')
+        tf = Terraform(working_dir=terraform_path)
 
+        return_code, stdout, stderr = tf.init()
+        if stderr:
+            query = {"$set": {'status': 'Terraform Initialization Failed'}}
+            database.updateone(collection, deploy_id, query)
+            logger.debug(stderr)
+            raise ValueError('Terraform Initialization Failed')
+        else:
+            query = {"$set": {'status': 'Terraform Initialization Complete'}}
+            database.updateone(collection, deploy_id, query)
 
+        return_code, stdout, stderr = tf.plan()
+        if stderr:
+            query = {"$set": {'status': 'Terraform Plan Failed'}}
+            database.updateone(collection, deploy_id, query)
+            logger.debug(stderr)
+            raise ValueError('Terraform Plan Failed')
+        else:
+            query = {"$set": {'status': 'Terraform Plan Complete'}}
+            database.updateone(collection, deploy_id, query)
 
-       return_code, stdout, stderr = tf.apply(no_color=IsFlagged, refresh=False, skip_plan=True)
-       if stderr:
-          query = {"$set": {'status': 'Terraform Apply Failed'}}
-          database.updateone(collection, deploy_id, query)
-          logger.debug(stderr)
-          raise ValueError('Terraform Apply Failed')
+        return_code, stdout, stderr = tf.apply(no_color=IsFlagged, refresh=False, skip_plan=True)
+        if stderr:
+            query = {"$set": {'status': 'Terraform Apply Failed'}}
+            database.updateone(collection, deploy_id, query)
+            logger.debug(stderr)
+            raise ValueError('Terraform Apply Failed')
+        else:
+            query = {"$set": {'status': 'Terraform Apply Successful'}}
+            database.updateone(collection, deploy_id, query)
 
-       return "Terraform Apply Successfull"
-       #read_state_file = tf.read_state_file()
-       #logger.debug(read_state_file)
+        return "Terraform Apply Successful"
+        # read_state_file = tf.read_state_file()
+        # logger.debug(read_state_file)
 
     except ValueError as err:
-       logger.debug(err.args)
+        logger.debug(err.args)

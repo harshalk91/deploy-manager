@@ -1,8 +1,12 @@
 import pymongo
+from configparser import ConfigParser
+config_object = ConfigParser()
+config_object.read("config.ini")
+db = config_object['db']
 
 
 class database(object):
-    URI = "mongodb://mongoadmin:secret@192.168.100.8:27017"
+    URI = db["URI"]
     DATABASE = None
 
     @staticmethod

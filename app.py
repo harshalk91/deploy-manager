@@ -21,12 +21,13 @@ app = Flask(__name__)
 app.config.update(
     CELERY_BROKER_URL='redis://localhost:6379',
     CELERY_RESULT_BACKEND='redis://localhost:6379',
-    CELERY_TASK_SERIALIZER = 'json',
-    CELERY_RESULT_SERIALIZER = 'json'
+    CELERY_TASK_SERIALIZER='json',
+    CELERY_RESULT_SERIALIZER='json'
 )
 celery = make_celery(app)
 celery_trigger_deployment = make_celery(app)
 celery_2 = make_celery(app)
+
 
 @app.route("/getdeployments", methods=['GET'])
 def getDeployments():
@@ -40,8 +41,8 @@ def getDeployments():
         logging.debug(result)
         re = []
         for i in result:
-           logger.debug(i)
-           re.append(i)
+            logger.debug(i)
+            re.append(i)
         if not re:
             return status.HTTP_500_INTERNAL_SERVER_ERROR
         else:
@@ -57,13 +58,12 @@ def createDeployment():
         result = database.getLastInsertedDocument("deployment")
         re = []
         for i in result:
-           logger.debug(i)
-           re.append(i)
+            logger.debug(i)
+            re.append(i)
 
         return render_template('show_deployments.html',
-                                title='overview',
-                                result=re), status.HTTP_200_OK
-
+                               title='overview',
+                               result=re), status.HTTP_200_OK
 
     if request.method == "POST":
         logger.debug("Request Came for inserting data")
@@ -75,54 +75,53 @@ def createDeployment():
         data['deployment_id'] = get_uuid()
         collection = "deployment"
         logger.debug("Initializing DB")
- 
+
         insertToDB.delay(collection, data)
         query = {"deployment_id": data['deployment_id']}
         database.initialize()
         time.sleep(1)
         result = database.getData(collection, query)
-        #cloud_credentials = getCloudCredentials(data['cloud_provider'])
+        # cloud_credentials = getCloudCredentials(data['cloud_provider'])
         logger.debug("Triggering Async Task to create deployment")
-        celeryTriggerDeployment.apply_async(args=[data['name'], data['template'], data['instance_count'], collection, data['deployment_id'], data['cloud_provider']], countdown=5, expires=180)
-        #if not str(data['deployment_id']) or res == "Error":
-        #    return status.HTTP_500_INTERNAL_SERVER_ERROR
-        #else:
-        #return redirect('/status?deployment_id=', data['deployment_id'])
+        celeryTriggerDeployment.apply_async(
+            args=[data['name'], data['template'], data['instance_count'], collection, data['deployment_id'],
+                  data['cloud_provider']], countdown=2, expires=180)
         return render_template('show_deployments.html',
-                                title='overview',
-                                result=result), status.HTTP_200_OK
+                               title='overview',
+                               result=result), status.HTTP_200_OK
 
 
 @celery.task(name='celery_example.celery')
 def insertToDB(collection, data):
-    logger.debug("Async Task Started for Inserting deployment recrord into DB")
+    logger.debug("Async Task Started for Inserting deployment record into DB")
     database.initialize()
     database.insert(collection, data)
 
+
 @celery.task(name='celery_example.celery_trigger_deployment', serializer='json')
 def celeryTriggerDeployment(name, template, instance_count, collection, deployment_id, cloud_provider):
-    logger.debug("Async Task Started for Trigerring Deployment")
+    logger.debug("Async Task Started for Triggering Deployment")
     database.initialize()
     logger.debug("Database initialized")
     cloud_credentials = getCloudCredentials(cloud_provider)
     logger.debug(cloud_credentials)
     logger.debug("Triggering deployment for %s", name)
     template_data = {
-            "aws_access_key": cloud_credentials[0]['aws_access_key'],
-            "aws_secret_key": cloud_credentials[0]['aws_secret_key'],
-            "aws_region": cloud_credentials[0]['aws_region'],
-            "ami": cloud_credentials[0]['ami'],
-            "instance_count": instance_count,
-            "instance_type": cloud_credentials[0]['template'][template],
-            "key_name": "jumpbox-kepair",
-            "subnet_id": "subnet-022ab974e8cce7e1d",
-            "security_group_id": "sg-0639f1fc8e91af47e"
-        }
+        "aws_access_key": cloud_credentials[0]['aws_access_key'],
+        "aws_secret_key": cloud_credentials[0]['aws_secret_key'],
+        "aws_region": cloud_credentials[0]['aws_region'],
+        "ami": cloud_credentials[0]['ami'],
+        "instance_count": instance_count,
+        "instance_type": cloud_credentials[0]['template'][template],
+        "key_name": "jumpbox-kepair",
+        "subnet_id": "subnet-022ab974e8cce7e1d",
+        "security_group_id": "sg-0639f1fc8e91af47e"
+    }
     tfvars_file = jinjaLoader(template_data)
     logger.debug(tfvars_file)
     if os.path.exists(tfvars_file):
-        
-        deploy_id = { "deployment_id": deployment_id }
+
+        deploy_id = {"deployment_id": deployment_id}
         query = {"$set": {'status': 'Instance Creation Started"'}}
         database.updateone(collection, deploy_id, query)
         logger.debug("DB Updated and deployment status changed")
@@ -131,14 +130,9 @@ def celeryTriggerDeployment(name, template, instance_count, collection, deployme
         logger.debug("Instance Created Started")
         inst_status = createInstancetf(terraform_dir, collection, deployment_id)
         logger.debug(inst_status)
-        
-
-        #database.updateDeployment(collection, query={"deployment_id": deployment_id, {$set: {"status": "Instance Creation Started"}}))
     else:
-        logger.error("Error!! File Does Not exist" )
+        logger.error("Error!! File Does Not exist")
         return "Error"
-
-    #triggerDeployment(name, template, instance_count, collection, deployment_id, cloud_provider)
 
 
 @app.route("/status", methods=['GET'])
