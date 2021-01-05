@@ -47,17 +47,6 @@ def jinjaLoader(template_data):
     return newfile
 
 
-def createInstance():
-    command = "sh " + os.getcwd() + "/scripts/create-instance.sh " + os.path.join(os.getcwd(), "terraform") + " >> " + os.path.join(os.getcwd()) + "/deploymanager " + "2>&1"
-    logger.debug(command)
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    process.wait()
-    output, error = process.communicate()
-    logger.debug(output)
-    #command = "sh " + os.getcwd() + "/scripts/read-state,sh " + os.path.join(os.getcwd(), "terraform")
-    #tf_state = subprocess.check_output(["sh", + os.getcwd() + "/scripts/read-state.sh", os.path.join(os.getcwd(), "terraform")])
-    #logger.debug(tf_state)
-    #return tf_state
 
 def createInstancetf(terraform_path, collection, deployment_id):
     try:
@@ -96,40 +85,3 @@ def createInstancetf(terraform_path, collection, deployment_id):
 
     except ValueError as err:
        logger.debug(err.args)
-
-def triggerDeployment(deployment_name, template, instance_count, collection, deployment_id, cloud_provider):
-    try:
-        logger.debug("Inside triggerDeployment")
-        database.initailize()
-        logger.debug("Database initialized")
-        cloud_credentials = getCloudCredentials(cloud_provider)        
-        logger.debug(cloud_credentials)
-        logger.debug("Triggering deployment for %s", deployment_name)
-        template_data = {
-            "aws_access_key": cloud_credentials[0]['aws_access_key'],
-            "aws_secret_key": cloud_credentials[0]['aws_secret_key'],
-            "aws_region": cloud_credentials[0]['aws_region'],
-            "ami": cloud_credentials[0]['ami'],
-            "instance_count": instance_count,
-            "instance_type": cloud_credentials[0]['template'][template],
-            "key_name": "jumpbox-kepair",
-            "subnet_id": "subnet-022ab974e8cce7e1d",
-            "security_group_id": "sg-0639f1fc8e91af47e"
-        }
-        tfvars_file = jinjaLoader(template_data)
-        logger.debug(tfvars_file)
-        if os.path.exists(tfvars_file):
-            instance_creation_status = createInstance()
-            logger.debug(tfvars_file)
-            newvalues = '{"deployment_id": deployment_id}, {$set: {"status": "Instance Creation Started"}}'
-            database.updateDeployment(collection, newvalues)
-
-            logger.debug("DB Updated and deployment status changed")
-            #database.updateDeployment(collection, query={"deployment_id": deployment_id, {$set: {"status": "Instance Creation Started"}}))
-            return instance_creation_status
-        else:
-            logger.error("Error!! File Does Not exist" )
-            return "Error"
-
-    except Exception as e:
-        return "Error"
