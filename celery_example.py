@@ -1,5 +1,17 @@
 from flask import Flask
 from flask_celery import make_celery
+import logging
+
+logging.basicConfig(
+    filename="deploymanager-workflow",
+    filemode='a',
+    level=logging.DEBUG,
+    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+logging.info("Started...")
+logger = logging.getLogger(__name__)
+
 
 app = Flask(__name__)
 app.config.update(

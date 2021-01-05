@@ -25,3 +25,7 @@ class database(object):
     @staticmethod
     def updateDeployment(collection, query):
         return database.DATABASE[collection].update(query)
+    
+    @staticmethod
+    def updateone(collection, old, new):
+        return database.DATABASE[collection].update_one(old, new)

@@ -8,7 +8,7 @@ from flask_celery import make_celery
 import time
 
 logging.basicConfig(
-    filename="deploymanager",
+    filename="deploymanager-workflow",
     filemode='a',
     level=logging.DEBUG,
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
@@ -108,15 +108,19 @@ def celeryTriggerDeployment(name, template, instance_count, collection, deployme
     tfvars_file = jinjaLoader(template_data)
     logger.debug(tfvars_file)
     if os.path.exists(tfvars_file):
+        
+        deploy_id = { "deployment_id": deployment_id }
+        query = {"$set": {'status': 'Instance Creation Started"'}}
+        database.updateone(collection, deploy_id, query)
+        logger.debug("DB Updated and deployment status changed")
+
         terraform_dir = os.path.join(os.getcwd() + "/terraform")
         logger.debug("Instance Created Started")
-        createInstancetf(terraform_dir)
+        state_file = createInstancetf(terraform_dir)
+        logger.debug(state_file)
+        
 
-        newvalues = '{"deployment_id": deployment_id}, {$set: {"status": "Instance Creation Started"}}'
-        database.updateDeployment(collection, newvalues)
-        logger.debug("DB Updated and deployment status changed")
         #database.updateDeployment(collection, query={"deployment_id": deployment_id, {$set: {"status": "Instance Creation Started"}}))
-        return instance_creation_status
     else:
         logger.error("Error!! File Does Not exist" )
         return "Error"

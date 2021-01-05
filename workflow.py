@@ -73,6 +73,10 @@ def createInstancetf(terraform_path):
     logger.debug(tf_apply)
 
 
+    read_state_file = tf.read_state_file()
+    logger.debug(read_state_file)
+    return read_state_file
+
 def triggerDeployment(deployment_name, template, instance_count, collection, deployment_id, cloud_provider):
     try:
         logger.debug("Inside triggerDeployment")
