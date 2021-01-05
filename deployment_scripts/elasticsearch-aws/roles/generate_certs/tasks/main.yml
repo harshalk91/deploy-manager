@@ -1,0 +1,35 @@
+---
+- name: Copy instances yaml
+  template:
+    src: instance.yaml.j2
+    dest: "{{ instance_yaml_path }}"
+  when: hostvars[inventory_hostname].ec2_tag_Name == "Elasticsearch-Node-1"
+
+- name: generate elasticsearch certificates
+  shell:  /usr/share/elasticsearch/bin/elasticsearch-certutil cert --keep-ca-key ca --pem --in "{{ instance_yaml_path }}"  --out "{{ certs_zip_path }}/certs.zip"
+  when: hostvars[inventory_hostname].ec2_tag_Name == "Elasticsearch-Node-1"
+
+- name: Download certs from server
+  fetch:
+    src: "/tmp/certs.zip"
+    dest: "/tmp/"
+  when: hostvars[inventory_hostname].ec2_tag_Name == "Elasticsearch-Node-1"
+
+- name: certificate cleanup on server
+  file:
+    path: "{{ certs_zip_path }}/certs.zip"
+    state: absent
+  when: hostvars[inventory_hostname].ec2_tag_Name == "Elasticsearch-Node-1"
+
+- name: move certs.zip to /tmp
+  copy: 
+   src: "/tmp/{{ hostvars[inventory_hostname]['inventory_hostname'] }}/tmp/certs.zip"
+   dest: /tmp/
+  delegate_to: localhost
+  when: hostvars[inventory_hostname].ec2_tag_Name == "Elasticsearch-Node-1"
+
+- name: delete "/tmp/{{ hostvars[inventory_hostname]['inventory_hostname'] }}"
+  file:
+   path: /tmp/{{ hostvars[inventory_hostname]['inventory_hostname'] }}
+   state: absent
+  delegate_to: localhost

@@ -115,7 +115,8 @@ def celeryTriggerDeployment(name, template, instance_count, collection, deployme
         "instance_type": cloud_credentials[0]['template'][template],
         "key_name": "jumpbox-kepair",
         "subnet_id": "subnet-022ab974e8cce7e1d",
-        "security_group_id": "sg-0639f1fc8e91af47e"
+        "security_group_id": "sg-0639f1fc8e91af47e",
+        "instance_name": name
     }
     tfvars_file = jinjaLoader(template_data)
     logger.debug(tfvars_file)
@@ -126,7 +127,7 @@ def celeryTriggerDeployment(name, template, instance_count, collection, deployme
         database.updateone(collection, deploy_id, query)
         logger.debug("DB Updated and deployment status changed")
 
-        terraform_dir = os.path.join(os.getcwd() + "/terraform")
+        terraform_dir = os.path.join(os.getcwd() + "/aws-terraform")
         logger.debug("Instance Created Started")
         inst_status = createInstancetf(terraform_dir, collection, deployment_id)
         logger.debug(inst_status)

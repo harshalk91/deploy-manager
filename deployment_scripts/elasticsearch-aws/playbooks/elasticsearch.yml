@@ -1,0 +1,11 @@
+---
+- hosts: tag_type_elastic 
+  user: "{{ remote_user }}"
+  become: yes
+  become_user: root
+  roles:
+     - ../roles/generic
+     - ../roles/elasticsearch_install
+     - ../roles/elasticsearch_config 
+     - ../roles/elasticsearch_verify
+

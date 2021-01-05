@@ -7,7 +7,7 @@ resource "aws_instance" "elasticsearch_instance" {
   associate_public_ip_address = true
   vpc_security_group_ids = var.security_group_id
   tags = {
-    Name = "Elasticsearch-Node-${count.index + 1}"
+    Name = "${var.instance_name}-Node-${count.index + 1}"
     type = "elastic"
   }
 }

@@ -34,8 +34,8 @@ def getCloudCredentials(cloud_provider):
 
 def jinjaLoader(template_data):
     logger.debug("Copying template")
-    original_file = os.path.join(os.getcwd(), "terraform/terraform.tfvars.j2")
-    newfile = os.path.join(os.getcwd(), "terraform/terraform.tfvars")
+    original_file = os.path.join(os.getcwd(), "aws-terraform/terraform.tfvars.j2")
+    newfile = os.path.join(os.getcwd(), "aws-terraform/terraform.tfvars")
     copyfile(original_file, newfile)
     logger.debug("Rendering template")
     with open(newfile, "r+") as f:
@@ -64,7 +64,7 @@ def createInstancetf(terraform_path, collection, deployment_id):
             query = {"$set": {'status': 'Terraform Initialization Complete'}}
             database.updateone(collection, deploy_id, query)
 
-        return_code, stdout, stderr = tf.plan()
+        return_code, stdout, stderr = tf.plan('-state=terraform.tfstate.' + deployment_id)
         if stderr:
             query = {"$set": {'status': 'Terraform Plan Failed'}}
             database.updateone(collection, deploy_id, query)

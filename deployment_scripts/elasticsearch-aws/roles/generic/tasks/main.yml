@@ -1,0 +1,27 @@
+---
+- name: "update hostnames"
+  hostname:
+    name: "{{ ec2_tag_Name }}"
+
+- name: Turn off swap
+  command: swapoff -a
+
+- name: copy hosts file
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+
+- name: remove swap from fstab
+  lineinfile:
+    path: '/etc/fstab'
+    regexp: '\sswap\s'
+    state: 'absent'
+
+- name: Add or modify hard nofile limits for wildcard domain
+  pam_limits:
+    domain: '{{ item.domain }}'
+    limit_type: '{{ item.limit_type }}'
+    limit_item: '{{ item.limit_item }}'
+    value: '{{ item.value }}'
+  with_items:
+    - { domain: 'elasticsearch', limit_type: '-', limit_item: 'nofile', value: '65535'}

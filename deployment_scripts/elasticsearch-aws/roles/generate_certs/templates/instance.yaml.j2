@@ -1,0 +1,6 @@
+instances:
+{% for host in groups['tag_type_elastic'] %}
+ - name: {{ hostvars[host]['ec2_tag_Name'] }}
+   dns: ['{{ hostvars[host]['ec2_tag_Name']}}']
+   ip: ['{{ hostvars[host]['inventory_hostname']}}']
+{% endfor %}

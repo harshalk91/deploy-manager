@@ -1,0 +1,9 @@
+---
+- name: wait for cluster (https://{{ ansible_eth0.ipv4.address }}:9200/_cluster/health)
+  shell: |
+    rest_status=$(curl -s -u '{{ elastic_user }}:{{ elastic_password }}' --cacert /etc/elasticsearch/certs/ca/ca.crt -k -H 'Content-Type: application/json'  -XGET https://{{ ansible_eth0.ipv4.address }}:9200/_cluster/health  --insecure);
+    echo $rest_status | cut -d',' -f2 | grep 'green' | wc -l
+  register: rest_result
+  retries: 10
+  delay: 10
+- debug: var=rest_result
