@@ -59,23 +59,43 @@ def createInstance():
     #logger.debug(tf_state)
     #return tf_state
 
-def createInstancetf(terraform_path):
-    tf = Terraform(working_dir=terraform_path)
+def createInstancetf(terraform_path, collection, deployment_id):
+    try:
+       database.initialize()
+       deploy_id = { "deployment_id": deployment_id }
+
+       tf = Terraform(working_dir=terraform_path)
     
-    tf_init = tf.init()
-    logger.debug(tf_init)
-    
-    tf_plan = tf.plan()
-    logger.debug(tf_plan)
+       return_code, stdout, stderr = tf.init()
+       if stderr:
+          query = {"$set": {'status': 'Terraform Initialization Failed'}}
+          database.updateone(collection, deploy_id, query) 
+          logger.debug(stderr)
+          raise ValueError('Terraform Initialization Failed')
+             
+       
+       return_code, stdout, stderr = tf.plan()
+       if stderr:
+          query = {"$set": {'status': 'Terraform Plan Failed'}}
+          database.updateone(collection, deploy_id, query)
+          logger.debug(stderr)
+          raise ValueError('Terraform Plan Failed')
 
 
-    tf_apply = tf.apply(no_color=IsFlagged, refresh=False, skip_plan=True)
-    logger.debug(tf_apply)
 
+       return_code, stdout, stderr = tf.apply(no_color=IsFlagged, refresh=False, skip_plan=True)
+       if stderr:
+          query = {"$set": {'status': 'Terraform Apply Failed'}}
+          database.updateone(collection, deploy_id, query)
+          logger.debug(stderr)
+          raise ValueError('Terraform Apply Failed')
 
-    read_state_file = tf.read_state_file()
-    logger.debug(read_state_file)
-    return read_state_file
+       return "Terraform Apply Successfull"
+       #read_state_file = tf.read_state_file()
+       #logger.debug(read_state_file)
+
+    except ValueError as err:
+       logger.debug(err.args)
 
 def triggerDeployment(deployment_name, template, instance_count, collection, deployment_id, cloud_provider):
     try:

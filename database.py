@@ -2,7 +2,7 @@ import pymongo
 
 
 class database(object):
-    URI = "mongodb://mongoadmin:secret@192.168.100.8:27017"
+    URI = "mongodb://mongoadmin:secret@10.203.207.100:27017"
     DATABASE = None
 
     @staticmethod
@@ -17,6 +17,11 @@ class database(object):
     @staticmethod
     def getData(collection, query):
         return database.DATABASE[collection].find(query)
+    
+    @staticmethod
+    def getLastInsertedDocument(collection):
+        return database.DATABASE[collection].find().sort([("_id", -1)]).limit(1)
+    
 
     @staticmethod
     def insert(collection, data):

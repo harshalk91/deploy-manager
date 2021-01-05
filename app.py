@@ -50,8 +50,21 @@ def getDeployments():
                                    result=re), status.HTTP_200_OK
 
 
-@app.route("/createdeployment", methods=['POST'])
+@app.route("/createdeployment", methods=['POST', 'GET'])
 def createDeployment():
+    if request.method == "GET":
+        database.initialize()
+        result = database.getLastInsertedDocument("deployment")
+        re = []
+        for i in result:
+           logger.debug(i)
+           re.append(i)
+
+        return render_template('show_deployments.html',
+                                title='overview',
+                                result=re), status.HTTP_200_OK
+
+
     if request.method == "POST":
         logger.debug("Request Came for inserting data")
         data = request.get_json()
@@ -116,8 +129,8 @@ def celeryTriggerDeployment(name, template, instance_count, collection, deployme
 
         terraform_dir = os.path.join(os.getcwd() + "/terraform")
         logger.debug("Instance Created Started")
-        state_file = createInstancetf(terraform_dir)
-        logger.debug(state_file)
+        inst_status = createInstancetf(terraform_dir, collection, deployment_id)
+        logger.debug(inst_status)
         
 
         #database.updateDeployment(collection, query={"deployment_id": deployment_id, {$set: {"status": "Instance Creation Started"}}))
