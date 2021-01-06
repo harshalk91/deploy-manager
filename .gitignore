@@ -7,5 +7,5 @@ terraform/terraform.tfstate.backup
 __pycache__/
 .terraform/
 *terraform.tfvars
-*terraform.tfstate
-
+*.tfstate*
+*plan*

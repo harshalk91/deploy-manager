@@ -73,10 +73,7 @@ def createInstancetf(terraform_path, collection, deployment_id, tfvars_file):
             query = {"$set": {'status': 'Terraform Plan Complete'}}
             database.updateone(collection, deploy_id, query)
         '''
-        return_code, stdout, stderr = tf.cmd("apply", "-state=" + deployment_id + ".tfstate", "-state-out=" + deployment_id + ".tfstate", "-var-file=" + tfvars_file)
-        logger.debug(return_code)
-        logger.debug("=======================")
-        logger.debug(stderr)
+        return_code, stdout, stderr = tf.cmd("apply", "-state=" + deployment_id + ".tfstate", "-state-out=" + deployment_id + ".tfstate", "-var-file=" + tfvars_file, "-auto-approve")
         #return_code, stdout, stderr = tf.apply(no_color=IsFlagged, refresh=False, skip_plan=True)
         if return_code != 0:
             query = {"$set": {'status': 'Terraform Apply Failed'}}
@@ -86,6 +83,13 @@ def createInstancetf(terraform_path, collection, deployment_id, tfvars_file):
         else:
             query = {"$set": {'status': 'Terraform Apply Successful'}}
             database.updateone(collection, deploy_id, query)
+
+            tfstate_file = terraform_path + "/" + deployment_id + ".tfstate"
+            with open(tfstate_file, 'r') as tfstate_obj:
+                tfstate_json = json.loads(tfstate_obj.read())
+
+            data = {"deployment_id": deployment_id, "tfstate": tfstate_json }
+            database.insert(collection, data)
 
         return "Terraform Apply Successful"
         # read_state_file = tf.read_state_file()
