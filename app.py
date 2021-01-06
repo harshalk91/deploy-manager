@@ -118,7 +118,7 @@ def celeryTriggerDeployment(name, template, instance_count, collection, deployme
         "security_group_id": "sg-0639f1fc8e91af47e",
         "instance_name": name
     }
-    tfvars_file = jinjaLoader(template_data)
+    tfvars_file = jinjaLoader(template_data, deployment_id)
     logger.debug(tfvars_file)
     if os.path.exists(tfvars_file):
 
@@ -129,8 +129,8 @@ def celeryTriggerDeployment(name, template, instance_count, collection, deployme
 
         terraform_dir = os.path.join(os.getcwd() + "/aws-terraform")
         logger.debug("Instance Created Started")
-        inst_status = createInstancetf(terraform_dir, collection, deployment_id)
-        logger.debug(inst_status)
+        inst_status = createInstancetf(terraform_dir, collection, deployment_id, tfvars_file)
+        #logger.debug(inst_status)
     else:
         logger.error("Error!! File Does Not exist")
         return "Error"

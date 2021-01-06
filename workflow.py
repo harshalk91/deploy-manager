@@ -32,10 +32,10 @@ def getCloudCredentials(cloud_provider):
     return re
 
 
-def jinjaLoader(template_data):
+def jinjaLoader(template_data, deployment_id):
     logger.debug("Copying template")
     original_file = os.path.join(os.getcwd(), "aws-terraform/terraform.tfvars.j2")
-    newfile = os.path.join(os.getcwd(), "aws-terraform/terraform.tfvars")
+    newfile = os.path.join(os.getcwd(), "aws-terraform/" + deployment_id + "-terraform.tfvars")
     copyfile(original_file, newfile)
     logger.debug("Rendering template")
     with open(newfile, "r+") as f:
@@ -47,12 +47,11 @@ def jinjaLoader(template_data):
     return newfile
 
 
-def createInstancetf(terraform_path, collection, deployment_id):
+def createInstancetf(terraform_path, collection, deployment_id, tfvars_file):
     try:
         database.initialize()
         deploy_id = {"deployment_id": deployment_id}
-
-        tf = Terraform(working_dir=terraform_path)
+        tf = Terraform(working_dir=terraform_path, var_file=tfvars_file)
 
         return_code, stdout, stderr = tf.init()
         if stderr:
@@ -63,8 +62,8 @@ def createInstancetf(terraform_path, collection, deployment_id):
         else:
             query = {"$set": {'status': 'Terraform Initialization Complete'}}
             database.updateone(collection, deploy_id, query)
-
-        return_code, stdout, stderr = tf.plan('-state=terraform.tfstate.' + deployment_id)
+        '''
+        return_code, stdout, stderr = tf.plan('-out=' + deployment_id + '.plan')
         if stderr:
             query = {"$set": {'status': 'Terraform Plan Failed'}}
             database.updateone(collection, deploy_id, query)
@@ -73,9 +72,13 @@ def createInstancetf(terraform_path, collection, deployment_id):
         else:
             query = {"$set": {'status': 'Terraform Plan Complete'}}
             database.updateone(collection, deploy_id, query)
-
-        return_code, stdout, stderr = tf.apply(no_color=IsFlagged, refresh=False, skip_plan=True)
-        if stderr:
+        '''
+        return_code, stdout, stderr = tf.cmd("apply", "-state=" + deployment_id + ".tfstate", "-state-out=" + deployment_id + ".tfstate", "-var-file=" + tfvars_file)
+        logger.debug(return_code)
+        logger.debug("=======================")
+        logger.debug(stderr)
+        #return_code, stdout, stderr = tf.apply(no_color=IsFlagged, refresh=False, skip_plan=True)
+        if return_code != 0:
             query = {"$set": {'status': 'Terraform Apply Failed'}}
             database.updateone(collection, deploy_id, query)
             logger.debug(stderr)
@@ -87,6 +90,5 @@ def createInstancetf(terraform_path, collection, deployment_id):
         return "Terraform Apply Successful"
         # read_state_file = tf.read_state_file()
         # logger.debug(read_state_file)
-
     except ValueError as err:
         logger.debug(err.args)
