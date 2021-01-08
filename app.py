@@ -1,11 +1,13 @@
-import logging
-from flask import Flask, render_template, request, redirect
-from database import database
-from utils import get_uuid, get_current_timestamp
+from flask import Flask, render_template, request
 from flask_api import status
-from flask_celery import make_celery
-import time
+
 from deployment import *
+from flask_celery import make_celery
+from configparser import ConfigParser
+
+config_object = ConfigParser()
+config_object.read("config.ini")
+redis = config_object['redis']
 
 logging.basicConfig(
     filename="deploymanager-workflow",
@@ -19,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config.update(
-    CELERY_BROKER_URL='redis://10.247.155.80:6379',
-    CELERY_RESULT_BACKEND='redis://10.247.155.80:6379',
+    CELERY_BROKER_URL=redis['CELERY_BROKER_URL'],
+    CELERY_RESULT_BACKEND=redis['CELERY_RESULT_BACKEND'],
     CELERY_TASK_SERIALIZER='json',
     CELERY_RESULT_SERIALIZER='json'
 )
@@ -62,13 +64,13 @@ def createDeployment():
         collection = "deployment"
         deployment_obj = deployment()
         deployment_json = deployment_obj.create_json(request.get_json())
-        deployment.insertToDB(collection, deployment_json)
-        result = deployment_obj.get_data(collection, deployment_json['deployment_id'])
         celeryTriggerDeployment.apply_async(
             args=[deployment_json, collection], countdown=2, expires=180)
+        deployment.insertToDB(collection, deployment_json)
+        result = deployment_obj.get_data(collection, deployment_json['deployment_id'])
         return render_template('show_deployments.html',
-                                title='overview',
-                                result=result), status.HTTP_200_OK
+                               title='overview',
+                               result=result), status.HTTP_200_OK
 
 
 @app.route("/status", methods=['GET'])
@@ -89,7 +91,9 @@ def get_deployment_status():
 @celery.task(name='celery_example.celery_trigger_deployment', serializer='json')
 def celeryTriggerDeployment(deployment_json, collection):
     logger.debug("Hello from celeryTriggerDeployment")
-    #deployment.celeryTriggerDeployment(deployment_json, collection)
+    logger.debug(deployment_json)
+    logger.debug(type(deployment_json))
+    deployment.celeryTriggerDeployment(deployment_json, collection)
 
 
 if __name__ == '__main__':

@@ -51,7 +51,8 @@ class deployment:
         result = database.getData(collection, query)
         return result
 
-    def getCloudCredentials(self, cloud_provider):
+    @staticmethod
+    def getCloudCredentials(cloud_provider):
         logger.debug("Fetching DB Credentials")
         database.initialize()
         collection = "cloudvault"
@@ -62,7 +63,8 @@ class deployment:
             re.append(i)
         return re
 
-    def jinjaLoader(self, template_data, deployment_id):
+    @staticmethod
+    def jinjaLoader(template_data, deployment_id):
         """
 
         :param template_data: Terraform tfvars in json format
@@ -82,7 +84,8 @@ class deployment:
             f.truncate()
         return newfile
 
-    def createInstanceTF(self, terraform_path, collection, deployment_id, tfvars_file):
+    @staticmethod
+    def createInstanceTF(terraform_path, collection, deployment_id, tfvars_file):
         """
 
         :param terraform_path: Terraform Directory absolute path
@@ -131,15 +134,18 @@ class deployment:
             # logger.debug(read_state_file)
         except ValueError as err:
             logger.debug(err.args)
-   
-    @staticmethod 
+
+    @staticmethod
     def insertToDB(collection, data_json):
         database.initialize()
         database.insert(collection, data_json)
 
-    def celeryTriggerDeployment(self, data, collection):
+    @staticmethod
+    def celeryTriggerDeployment(data_json, collection):
+        data=data_json
         logger.debug("Async Task Started for Triggering Deployment")
-        cloud_credentials = self.getCloudCredentials(data['cloud_provider'])
+        logger.debug(data)
+        cloud_credentials = deployment.getCloudCredentials(data['cloud_provider'])
         logger.debug("Triggering deployment for %s", data['name'])
         template_data = {
             "aws_access_key": cloud_credentials[0]['aws_access_key'],
@@ -153,9 +159,8 @@ class deployment:
             "security_group_id": "sg-0639f1fc8e91af47e",
             "instance_name": data['name']
         }
-        tfvars_file = self.jinjaLoader(template_data, data['deployment_id'])
+        tfvars_file = deployment.jinjaLoader(template_data, data['deployment_id'])
         logger.debug(tfvars_file)
-        '''
         if os.path.exists(tfvars_file):
 
             deploy_id = {"deployment_id": data['deployment_id']}
@@ -165,9 +170,8 @@ class deployment:
 
             terraform_dir = os.path.join(os.getcwd() + "/aws-terraform")
             logger.debug("Instance Created Started")
-            inst_status = self.createInstanceTF(terraform_dir, collection, data['deployment_id'], tfvars_file)
+            inst_status = deployment.createInstanceTF(terraform_dir, collection, data['deployment_id'], tfvars_file)
             # logger.debug(inst_status)
         else:
             logger.error("Error!! File Does Not exist")
             return "Error"
-        '''
