@@ -1,0 +1,13 @@
+---
+- name: move certs.zip to /tmp
+  copy:
+   src: "/tmp/{{ hostvars[inventory_hostname]['inventory_hostname'] }}/tmp/certs.zip"
+   dest: /tmp/
+  delegate_to: localhost
+  when: hostvars[inventory_hostname].ec2_tag_Name == "Elasticsearch-Node-1"
+
+  #- name: delete "/tmp/{{ hostvars[inventory_hostname]['inventory_hostname'] }}"
+  #file:
+  # path: /tmp/{{ hostvars[inventory_hostname]['inventory_hostname'] }}
+  # state: absent
+  #delegate_to: localhost

@@ -1,0 +1,27 @@
+---
+- name: Copy elasticsearch yaml
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: "elasticsearch.yml.j2", dest: "/etc/elasticsearch/elasticsearch.yml" }
+    - { src: "jvm.options.j2", dest: "/etc/elasticsearch/jvm.options" }
+    - { src: "elasticsearch.service.j2", dest: "/usr/lib/systemd/system/elasticsearch.service" }
+
+
+- include_role:
+    name: ../roles/generate_certs
+
+- include_role:
+    name: ../roles/distribute_certs
+
+- name: Create elastic user
+  shell: /usr/share/elasticsearch/bin/elasticsearch-users useradd "{{ elastic_user }}" -p "{{ elastic_password }}" -r superuser
+  ignore_errors: true
+
+- name: Restart elasticsearch
+  systemd:
+    name: elasticsearch
+    state: restarted
+    daemon_reload: yes
+    enabled: yes

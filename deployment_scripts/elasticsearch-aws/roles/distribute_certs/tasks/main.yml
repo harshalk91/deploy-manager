@@ -1,0 +1,22 @@
+---
+- name: create directory
+  file:
+   state: directory
+   path: /etc/elasticsearch/certs
+
+- name: Distribute certs
+  copy:
+    src: /tmp/certs.zip
+    dest: /etc/elasticsearch/certs/
+
+- name: delete local cert.zip
+  file:
+    path: /tmp/certs.zip
+    state: absent
+  delegate_to: localhost
+
+- name: Unarchive certs
+  unarchive:
+    src: /etc/elasticsearch/certs/certs.zip
+    dest: /etc/elasticsearch/certs/
+    remote_src: true

@@ -1,0 +1,10 @@
+xms_value: -Xms1g
+xmx_value: -Xmx1g
+cluster_name: batman
+xpack_security_enabled: true
+instance_yaml_path: /tmp/instance.yaml
+certs_zip_path: /tmp
+certs_zip_path_local: /tmp
+elastic_user: nfvo
+elastic_password: nfvo123
+remote_user: ec2-user

@@ -3,3 +3,5 @@ celery
 flask_api
 pymongo
 python_terraform
+redis
+ansible==2.9.13
