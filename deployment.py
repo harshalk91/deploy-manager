@@ -119,6 +119,7 @@ class deployment:
                 logger.debug(stderr)
                 raise ValueError('Terraform Apply Failed')
             else:
+
                 query = {"$set": {'status': 'Terraform Apply Successful'}}
                 database.updateone(collection, deploy_id, query)
 
@@ -127,13 +128,20 @@ class deployment:
                     tfstate_json = json.loads(tfstate_obj.read())
 
                 tfstate_data = {"deployment_id": deployment_id, "tfstate": tfstate_json}
+                collection = "tfstate"
                 database.insert(collection, tfstate_data)
-
-            return "Terraform Apply Successful"
-            # read_state_file = tf.read_state_file()
-            # logger.debug(read_state_file)
+                return "Terraform Apply Successful"
         except ValueError as err:
             logger.debug(err.args)
+
+    @staticmethod
+    def readStateFile(collection, deployment_id):
+        state_file_obj = database.getData(collection, deployment_id)
+        re = []
+        for i in state_file_obj:
+            re.append(i)
+        logger.debug(re)
+        return re
 
     @staticmethod
     def insertToDB(collection, data_json):
@@ -171,6 +179,10 @@ class deployment:
             terraform_dir = os.path.join(os.getcwd() + "/aws-terraform")
             logger.debug("Instance Created Started")
             inst_status = deployment.createInstanceTF(terraform_dir, collection, data['deployment_id'], tfvars_file)
+            if inst_status == "Terraform Apply Successful":
+                instance_ids = deployment.readStateFile(collection="tfstate", data['deployment_id'])
+
+
             # logger.debug(inst_status)
         else:
             logger.error("Error!! File Does Not exist")
