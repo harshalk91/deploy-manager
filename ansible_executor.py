@@ -13,10 +13,10 @@ context.CLIARGS = ImmutableDict(tags={}, listtags=False, listtasks=False, listho
                     ssh_common_args=None, ssh_extra_args=None, sftp_extra_args=None, scp_extra_args=None, become=True,
                     become_method='sudo', become_user='root', verbosity=True, check=False, start_at_task=None)
 
-inventory = InventoryManager(loader=loader, sources=('/home/ec2-user/deploy-manager-new/deployment_scripts/elasticsearch-aws/ec2.py',))
+inventory = InventoryManager(loader=loader, sources=('/home/ec2-user/deploy-manager-new/deployment_scripts/elasticsearch-aws/ec2.py'))
 
 variable_manager = VariableManager(loader=loader, inventory=inventory, version_info=CLI.version_info(gitinfo=False))
 
-pbex = PlaybookExecutor(playbooks=['/home/ec2-user/deploy-manager-new/deployment_scripts/elasticsearch-aws/elasticsearch.yml'], inventory=inventory, variable_manager=variable_manager, loader=loader, passwords={})
+pbex = PlaybookExecutor(playbooks=['/home/ec2-user/deploy-manager-new/deployment_scripts/elasticsearch-aws/playbooks/elasticsearch.yml'], inventory=inventory, variable_manager=variable_manager, loader=loader, passwords={})
 
 results = pbex.run()
