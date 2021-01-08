@@ -5,6 +5,8 @@ from jinja2 import Template
 import os
 from python_terraform import *
 from shutil import copyfile
+import json
+import boto3
 
 logging.basicConfig(
     filename="deploymanager-workflow",
@@ -26,6 +28,7 @@ class deployment:
         data['user'] = "Harshal"
         data['status'] = "InProgress"
         data['deployment_id'] = get_uuid()
+        logger.debug(data)
         return data
 
     def get_data(self, collection, deployment_id):
@@ -135,12 +138,29 @@ class deployment:
             logger.debug(err.args)
 
     @staticmethod
-    def readStateFile(collection, deployment_id):
-        state_file_obj = database.getData(collection, deployment_id)
+    def readStateFile(tfstate_file):
+        instance_ids = []
+        tf = Terraform()
+        tf.init()
+        tfstate_tuple = tf.cmd('show', '-json', tfstate_file)
+        tfstate_json = json.loads(tfstate_tuple[1])
+
+        for child_module in tfstate_json['values']['root_module']['child_modules']:
+            for resource in child_module['resources']:
+                instance_ids.append(resource['values']['instance_state'])
+        return instance_ids
+    
+    @staticmethod
+    def check_instance_status(instance_ids, cloud_credentials):
         re = []
-        for i in state_file_obj:
-            re.append(i)
-        logger.debug(re)
+        os.environ["aws_access_key_id"] = cloud_credentials[0]['aws_access_key']
+        os.environ["aws_secret_access_key "] = cloud_credentials[0]['aws_secret_key']
+        os.environ['region'] = cloud_credentials[0]['aws_region']
+        ec2 = boto3.resource('ec2', os.environ.get('region'))
+        for instance in ec2.instances.get_all_instances(instance_id=instance_ids):
+            re.append(instance.state)
+
+        logger.debu(re)
         return re
 
     @staticmethod
@@ -150,7 +170,13 @@ class deployment:
 
     @staticmethod
     def celeryTriggerDeployment(data_json, collection):
-        data=data_json
+        """
+
+        :param data_json: Data Received from User
+        :param collection: Mongo db collection
+        :return: list of instance ids or error
+        """
+        data = data_json
         logger.debug("Async Task Started for Triggering Deployment")
         logger.debug(data)
         cloud_credentials = deployment.getCloudCredentials(data['cloud_provider'])
@@ -180,10 +206,11 @@ class deployment:
             logger.debug("Instance Created Started")
             inst_status = deployment.createInstanceTF(terraform_dir, collection, data['deployment_id'], tfvars_file)
             if inst_status == "Terraform Apply Successful":
-                instance_ids = deployment.readStateFile(collection="tfstate", data['deployment_id'])
-
-
-            # logger.debug(inst_status)
+                tfstate_file = terraform_dir + "/" + data['deployment_id'] + '.tfstate'
+                instance_ids = deployment.readStateFile(tfstate_file)
+                logger.debug(instance_ids)
+                #inst_status = deployment.check_instance_status(instance_ids, cloud_credentials)
+                #return inst_status
         else:
             logger.error("Error!! File Does Not exist")
             return "Error"
