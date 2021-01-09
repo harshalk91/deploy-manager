@@ -7,6 +7,7 @@ from python_terraform import *
 from shutil import copyfile
 import json
 import boto3
+from ansible_executor import *
 
 logging.basicConfig(
     filename="deploymanager-workflow",
@@ -138,30 +139,52 @@ class deployment:
             logger.debug(err.args)
 
     @staticmethod
-    def readStateFile(tfstate_file):
+    def readStateFile(tfstate_file, terraform_dir):
         instance_ids = []
-        tf = Terraform()
+
+        tf = Terraform(working_dir=terraform_dir)
+
         tf.init()
+
         tfstate_tuple = tf.cmd('show', '-json', tfstate_file)
+
         tfstate_json = json.loads(tfstate_tuple[1])
 
         for child_module in tfstate_json['values']['root_module']['child_modules']:
             for resource in child_module['resources']:
-                instance_ids.append(resource['values']['instance_state'])
+                instance_ids.append(resource['values']['id'])
         return instance_ids
-    
+
     @staticmethod
     def check_instance_status(instance_ids, cloud_credentials):
-        re = []
-        os.environ["aws_access_key_id"] = cloud_credentials[0]['aws_access_key']
-        os.environ["aws_secret_access_key "] = cloud_credentials[0]['aws_secret_key']
-        os.environ['region'] = cloud_credentials[0]['aws_region']
-        ec2 = boto3.resource('ec2', os.environ.get('region'))
-        for instance in ec2.instances.get_all_instances(instance_id=instance_ids):
-            re.append(instance.state)
 
-        logger.debu(re)
-        return re
+        os.environ["AWS_ACCESS_KEY_ID"] = cloud_credentials['aws_access_key']
+        os.environ["AWS_SECRET_ACCESS_KEY"] = cloud_credentials['aws_secret_key']
+        os.environ['region'] = cloud_credentials['aws_region']
+        ec2 = boto3.resource('ec2', os.environ.get('region'))
+        instance_iterator = ec2.instances.filter(InstanceIds=instance_ids)
+        for instance_obj in instance_iterator:
+            inst_id = ec2.Instance(id=instance_obj.id)
+            inst_id.wait_until_running()
+        return True
+
+    @staticmethod
+    def generate_ec2_ini(aws_region):
+        template = {
+            "aws_region": aws_region,
+        }
+        original_file = os.path.join(os.getcwd(), "deployment_scripts/elasticsearch-aws/ec2.ini.j2")
+        new_file = os.path.join(os.getcwd(), "deployment_scripts/elasticsearch-aws/ec2.ini")
+        copyfile(original_file, new_file)
+
+        with open(new_file, "r+") as f:
+            data = f.read()
+            j2_template = Template(data)
+            f.seek(0)
+            f.write(j2_template.render(template))
+            f.truncate()
+        return new_file
+
 
     @staticmethod
     def insertToDB(collection, data_json):
@@ -207,10 +230,17 @@ class deployment:
             inst_status = deployment.createInstanceTF(terraform_dir, collection, data['deployment_id'], tfvars_file)
             if inst_status == "Terraform Apply Successful":
                 tfstate_file = terraform_dir + "/" + data['deployment_id'] + '.tfstate'
-                instance_ids = deployment.readStateFile(tfstate_file)
+                instance_ids = deployment.readStateFile(tfstate_file, terraform_dir)
                 logger.debug(instance_ids)
-                #inst_status = deployment.check_instance_status(instance_ids, cloud_credentials)
-                #return inst_status
+                check_inst_status = deployment.check_instance_status(instance_ids, cloud_credentials[0])
+                if check_inst_status:
+                    logger.debug("All Instances are running. Now Starting Configuration")
+                    ec2_ini_file = deployment.generate_ec2_ini(template_data['aws_region'])
+                    if os.path.exists(ec2_ini_file):
+                        deployment_file = os.path.join(os.getcwd(), "deployment_scripts/elasticsearch-aws/playbooks/elasticsearch.yml") 
+                        inventory_file = os.path.join(os.getcwd(), "deployment_scripts/elasticsearch-aws/ec2.py")
+                        result = execute_deployment(deployment_file, inventory_file, cloud_credentials[0])
+                        return result
         else:
             logger.error("Error!! File Does Not exist")
             return "Error"
