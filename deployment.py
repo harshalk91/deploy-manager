@@ -240,6 +240,7 @@ class deployment:
                         deployment_file = os.path.join(os.getcwd(), "deployment_scripts/elasticsearch-aws/playbooks/elasticsearch.yml") 
                         inventory_file = os.path.join(os.getcwd(), "deployment_scripts/elasticsearch-aws/ec2.py")
                         result = execute_deployment(deployment_file, inventory_file, cloud_credentials[0])
+                        logging.debug(result)
                         return result
         else:
             logger.error("Error!! File Does Not exist")
