@@ -1,6 +1,6 @@
 flask
 celery
-flask_api
+Flask-API
 pymongo
 python_terraform
 redis
