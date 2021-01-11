@@ -5,6 +5,9 @@ class TerraformService:
     def __init__(self):
         self.terraform_obj = Terraform()
 
+    def process_terraform_vars(self):
+        pass
+
     def terraform_init(self, terraform_root_path=None):
         print("Running Terraform init please wait....")
         return_code, stdout, stderr = self.terraform_obj.init(dir_or_plan=terraform_root_path)
