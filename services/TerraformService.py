@@ -8,8 +8,8 @@ class TerraformService:
     def terraform_init(self, terraform_root_path=None):
         print("Running Terraform init please wait....")
         return_code, stdout, stderr = self.terraform_obj.init(dir_or_plan=terraform_root_path)
-        if (not stderr):
-            print("Terraform init completed")
+
+        return return_code, stdout, stderr
 
     def terraform_plan(self, state_file=None, terraform_vars=None):
         plan_kwargs = dict()
@@ -20,8 +20,7 @@ class TerraformService:
                                                               refresh=False,
                                                               capture_output=True,
                                                               **plan_kwargs)
-        if (not stderr):
-            print("Terraform plan completed")
+        return return_code, stdout, stderr
 
     def terraform_apply(self):
         pass
