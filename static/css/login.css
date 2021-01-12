@@ -1,0 +1,56 @@
+.login {
+    padding: 25px;
+    position: fixed;
+}
+.login-box {
+    position: fixed;
+    left: 50%;
+    margin-left: -115px;
+}
+
+.form-login {
+    color:white;
+    background-color: #154158;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 15px;
+    border-color:#d2d2d2;
+    border-width: 5px;
+    box-shadow:0 1px 0 #154158;
+}
+
+h4 {
+ border:0 solid #fff;
+ border-bottom-width:1px;
+ padding-bottom:10px;
+ text-align: center;
+}
+
+.form-control {
+    border-radius: 10px;
+}
+
+.wrapper {
+    text-align: center;
+}
+
+.login-col-md-offset-5 {
+  margin-left: 371%;
+    width: 250%;
+    margin-top: 108%;
+}
+
+.login-row{
+  margin-left: 45%;
+  margin-top: 45%;
+}
+
+.logout-message{
+    text-align: center;
+    margin-bottom: 10px;
+    color: green;
+    font-weight: 700;
+}
+

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="dpaasApp">
+<head>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta content="" name="description">
+    <meta content="" name="author">
+    <link href="/static/favicon.ico" rel="shortcut icon">
+
+    <title>Deployment Manager</title>
+
+    <link href="static/css/login.css" rel="stylesheet" type="text/css">
+    <link href="static/css/tab-panel.css" rel="stylesheet" type="text/css">
+    <link href="/static/font-awesome-4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Bootstrap core CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <link data-require="datatables@*" data-semver="1.10.12"
+          href="//cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css"
+          rel="stylesheet"/>
+    <link href="/static/css/dataTables.bootstrap.min.css" rel="stylesheet">
+
+
+    <link href="static/css/style.css" rel="stylesheet">
+    <link href="static/css/stepwizard.css" rel="stylesheet">
+    <link href="static/css/faq-accordian.css" rel="stylesheet">
+    <link href="static/css/jsoneditor.min.css" rel="stylesheet">
+    <link href="static/css/bootstrap-datepicker3.standalone.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css" rel="stylesheet">
+
+    <!-- first jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="static/js/vendor/bootstrap.js"></script>
+    <!-- then dataTables -->
+    <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.1.0/js/dataTables.responsive.js"></script>
+
+    <script src="static/js/vendor/angular.js"></script>
+    <script src="static/js/vendor/angular-cookies.js"></script>
+    <script src="static/js/vendor/angular-animate.min.js"></script>
+    <script src="static/js/vendor/angular-route.js"></script>
+    <script src="static/js/vendor/angular-datatables.min.js"></script>
+    <script src="static/js/vendor/angular-filter.js"></script>
+    <script src="static/js/vendor/dataTables.bootstrap.min.js"></script>
+    <script src="static/js/vendor/bootstrap-clockpicker.js"></script>
+    <script src="static/js/vendor/bootstrap-autocomplete.js"></script>
+    <script src="static/js/vendor/jquery-clockpicker.js"></script>
+    <script src="static/js/vendor/jquery.smartWizard.js"></script>
+    <script src="static/js/vendor/angular-animate-1.3.18.min.js"></script>
+    <script src="static/js/vendor/ui-bootstrap-custom-tpls-0.14.3.min.js"></script>
+    <script src="static/js/vendor/toArrayFilter.js"></script>
+    <script src="static/js/vendor/bootstrap-datepicker.js"></script>
+    <script src="static/js/vendor/bootstrap-datepicker.en-GB.min.js"></script>
+
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src='https://kit.fontawesome.com/a076d05399.js'></script>
+
+    {% for rurl in route_files %}
+        <script src="static/js/routes/{{ rurl }}"></script>
+    {% endfor %}
+
+    <script src="static/js/app.js"></script>
+    <script src="static/js/loading.js"></script>
+
+
+    {% for curl in controller_files %}
+        <script src="static/js/controllers/{{ curl }}"></script>
+    {% endfor %}
+
+    {% for surl in factories_files %}
+        <script src="static/js/factories/{{ surl }}"></script>
+    {% endfor %}
+
+
+<body>
+
+<div class="header">
+
+    <div class="navbar-header">
+        <a class="navbar-brand" href="#/"><b>Deployment Manager</b></a>
+    </div>
+
+</div>
+
+<div class="content" ng-controller="HomeController">
+    <div class="row main">
+        <div class="col-md-11">
+            <div class="row homepage-main-row">
+                <div class="row"><span><b>Cloud Providers</b></span></div>
+                <div class="row" style="margin-top: 1%;padding-left: 1%; margin-bottom: 1%" ng-if="providers.length > 0">
+                    <div class="homepage-grid">
+                        {% for provider in providers %}
+                        <div class="row homepage-grid-card homepage-grid-card-color">
+                        <div class="col-md-2">
+
+                        <span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x homepage-grid-card-icon">
+                                 </i><i class="fab fa-{{ provider.icon }} fa-stack-1x"></i></span>
+
+                        </div>
+                        <div class="col-md-9" style="margin-left: 3%">
+                            <div class="row"><label>{{ provider.name }}</label></div>
+                            <div class="row" style="margin-top: 10%;padding-right: 10%;height: 84px"><span
+                                    style="font-size: 14px;text-justify: auto">{{ provider.description }}</span>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <button class="btn btn-link home-page-button"
+                                            ng-click="gotoProvider(provider.url, provider.id)"
+                                            style="margin-left: -20%;">
+                                        Start
+                                    </button>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <button class="btn btn-link homepage-grid-card-help" style="margin-top: 8%;"><i
+                                            class="fa fa-question-circle"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
