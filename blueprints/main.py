@@ -30,7 +30,7 @@ def index():
                            factories_files=factories_files,
                            route_files=route_files)
 
-@bp.route('/api/config', methods=['GET'])
+@bp.route('/api/providers', methods=['GET'])
 def get():
     try:
         provider_service_obj = ProviderService()
@@ -41,7 +41,7 @@ def get():
 
     return response
 
-@bp.route('/api/config/home', methods=['GET'])
+@bp.route('/api/providers/home', methods=['GET'])
 def get_home_config():
     try:
         provider_service_obj = ProviderService()

@@ -750,9 +750,11 @@ div.bhoechie-tab div.bhoechie-tab-content:not(.active) {
 }
 
 .homepage-grid-card {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
     border: solid 1px #cfcfcf;
     height: 220px;
     padding-top: 4%;
+    background-color: #f1f1f1;
 }
 
 .homepage-grid-card-color {

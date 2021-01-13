@@ -13,7 +13,7 @@ configApp.factory('ConfigService',
                 $http({
                     method: 'GET',
                     params: {'foobar': new Date().getTime()},
-                    url: "/api/config"
+                    url: "/api/providers"
                 }).success(function (data, status, headers, config) {
                     // this callback will be called asynchronously
                     // when the response is available
@@ -47,7 +47,7 @@ configApp.factory('ConfigService',
                 $http({
                     method: 'GET',
                     params: {'foobar': new Date().getTime()},
-                    url: "/api/config/home"
+                    url: "/api/providers/home"
                 }).success(function (data, status, headers, config) {
                     console.log(data);
                     // this callback will be called asynchronously
