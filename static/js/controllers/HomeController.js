@@ -1,6 +1,6 @@
 configApp.controller('HomeController', ['$rootScope', '$scope', '$http', function ($rootScope, $scope, $http) {
 
-    console.log($rootScope);
+
     $scope.$watch(function () {
         return $rootScope.providers;
     }, function () {
@@ -8,19 +8,10 @@ configApp.controller('HomeController', ['$rootScope', '$scope', '$http', functio
     }, true);
 
 
-    $scope.gotoProvider = function (code, id) {
-        console.log(code);
-        console.log(id);
+    $scope.goToProvider = function (code, id) {
 
         location.href = "#" + code + "/?id=" + id;
 
     };
-
-
-    $scope.$on('ngRepeatReportsFinished', function (ngRepeatFinishedEvent) {
-        $scope.rerunAuthCheck();
-
-    });
-
 
 }]);

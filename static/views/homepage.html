@@ -1,3 +1,54 @@
-<html>
-<h1>I am in Home Controller</h1>
-</html>
+<div class="container">
+
+    <div class="col-md-10">
+
+        <div class="row homepage-main-row">
+
+            <div class="row"><span><b>Cloud Providers</b></span></div>
+
+            <div class="row" style="margin-top: 1%;padding-left: 1%; margin-bottom: 1%" ng-if="providers.length > 0">
+
+                <div class="homepage-grid">
+                    <div class="row homepage-grid-card homepage-grid-card-color"
+                         ng-repeat="provider in providers">
+                        <div class="col-md-2">
+
+                        <span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x homepage-grid-card-icon">
+                                 </i><i class="fab fa-{{ provider.icon }} fa-stack-1x"></i></span>
+
+                        </div>
+                        <div class="col-md-9" style="margin-left: 2%">
+                            <div class="row"><label>{{ provider.name }}</label></div>
+                            <div class="row" style="margin-top: 10%;padding-right: 10%;height: 84px"><span
+                                    style="font-size: 14px;text-justify: auto">{{ provider.description }}</span>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <button class="btn btn-link home-page-button"
+                                            ng-click="goToProvider(provider.url, provider.id)"
+                                            style="margin-left: -20%;">
+                                        Start
+                                    </button>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <button class="btn btn-link homepage-grid-card-help" style="margin-top: 8%;"><i
+                                            class="fa fa-question-circle"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

@@ -8,7 +8,7 @@
     <meta content="" name="author">
     <link href="/static/favicon.ico" rel="shortcut icon">
 
-    <title>Deployment Manager</title>
+    <title>Deploy Manager</title>
 
     <link href="static/css/login.css" rel="stylesheet" type="text/css">
     <link href="static/css/tab-panel.css" rel="stylesheet" type="text/css">
@@ -34,15 +34,17 @@
     <script src="static/js/vendor/bootstrap.js"></script>
     <!-- then dataTables -->
     <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.1.0/js/dataTables.responsive.js"></script>
 
     <script src="static/js/vendor/angular.js"></script>
     <script src="static/js/vendor/angular-cookies.js"></script>
     <script src="static/js/vendor/angular-animate.min.js"></script>
     <script src="static/js/vendor/angular-route.js"></script>
+
     <script src="static/js/vendor/angular-datatables.min.js"></script>
     <script src="static/js/vendor/angular-filter.js"></script>
     <script src="static/js/vendor/dataTables.bootstrap.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.1.0/js/dataTables.responsive.js"></script>
+
     <script src="static/js/vendor/bootstrap-clockpicker.js"></script>
     <script src="static/js/vendor/bootstrap-autocomplete.js"></script>
     <script src="static/js/vendor/jquery-clockpicker.js"></script>
@@ -52,9 +54,9 @@
     <script src="static/js/vendor/toArrayFilter.js"></script>
     <script src="static/js/vendor/bootstrap-datepicker.js"></script>
     <script src="static/js/vendor/bootstrap-datepicker.en-GB.min.js"></script>
-
     <script src="https://www.gstatic.com/charts/loader.js"></script>
     <script src='https://kit.fontawesome.com/a076d05399.js'></script>
+    <!--<script src="static/js/vendor/duel-list-box.js"></script>-->
 
     {% for rurl in route_files %}
         <script src="static/js/routes/{{ rurl }}"></script>
@@ -75,58 +77,83 @@
 
 <body>
 
-<div class="header">
+<div class="header" ng-controller="HomeController">
 
     <div class="navbar-header">
-        <a class="navbar-brand" href="#/"><b>Deployment Manager</b></a>
+        <a class="navbar-brand" href="#/"><b>Deploy Manager</b></a>
     </div>
 
 </div>
 
-<div class="content" ng-controller="HomeController">
+<div class="content">
     <div class="row main">
-        <div class="col-md-11">
-            <div class="row homepage-main-row">
-                <div class="row"><span><b>Cloud Providers</b></span></div>
-                <div class="row" style="margin-top: 1%;padding-left: 1%; margin-bottom: 1%" ng-if="providers.length > 0">
-                    <div class="homepage-grid">
-                        {% for provider in providers %}
-                        <div class="row homepage-grid-card homepage-grid-card-color">
-                        <div class="col-md-2">
+        <div ng-view=""></div>
+    </div>
+</div>
 
-                        <span class="fa-stack fa-lg"><i class="fa fa-circle fa-stack-2x homepage-grid-card-icon">
-                                 </i><i class="fab fa-{{ provider.icon }} fa-stack-1x"></i></span>
 
-                        </div>
-                        <div class="col-md-9" style="margin-left: 3%">
-                            <div class="row"><label>{{ provider.name }}</label></div>
-                            <div class="row" style="margin-top: 10%;padding-right: 10%;height: 84px"><span
-                                    style="font-size: 14px;text-justify: auto">{{ provider.description }}</span>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <button class="btn btn-link home-page-button"
-                                            ng-click="gotoProvider(provider.url, provider.id)"
-                                            style="margin-left: -20%;">
-                                        Start
-                                    </button>
-                                </div>
+<!-- /.container -->
+<div class="modal"><!-- Place at bottom of page --></div>
+</body>
+</html>
 
-                                <div class="col-md-6">
-                                    <button class="btn btn-link homepage-grid-card-help" style="margin-top: 8%;"><i
-                                            class="fa fa-question-circle"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                        {% endfor %}
-                    </div>
-                </div>
+<div aria-labelledby="myModalLabel" class="modal" id="profilemodal" ng-controller="HeaderController" role="dialog"
+     tabindex="-1">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <h4><img src="{{ photo_url }}" style="height: 60px;width: 100px;margin-right: 5px; border-radius: 40%"></h4>
+                <table class="table table-bordered">
+                    <tbody class="table">
+                        <tr>
+                            <th>Full Name</th>
+                            <td>{{ user }}</td>
+                        </tr>
+                        <tr>
+                            <th>Worker No.</th>
+                            <td>{{ employee_id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Staff ID</th>
+                            <td>{{ staff_id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Company</th>
+                            <td>{{ company }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email Address</th>
+                            <td>{{ email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Phone Number</th>
+                            <td>{{ phone_number }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" data-dismiss="modal" id="close" type="button">Close</button>
             </div>
         </div>
     </div>
 </div>
 
-</body>
-</html>
+<div aria-labelledby="myModalLabel" class="modal" id="logoutmodal" ng-controller="HeaderController" role="dialog"
+     tabindex="-1">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <h4>Do you want to Logout?</h4>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="logout" ng-click="logoutClick()" type="button">Logout</button>
+                <button class="btn btn-default" data-dismiss="modal" id="close" type="button">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 
