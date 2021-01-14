@@ -10,7 +10,7 @@ configApp.controller('HomeController', ['$rootScope', '$scope', '$http', functio
 
     $scope.goToProvider = function (code, id) {
 
-        location.href = "#" + code + "/?id=" + id;
+        location.href = "#" + code + "-deployments/?id=" + id;
 
     };
 

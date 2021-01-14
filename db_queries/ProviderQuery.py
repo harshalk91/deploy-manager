@@ -11,4 +11,4 @@ class ProviderQuery:
         return session.query(providers).filter_by(id=provider_id).all()
 
     def get_all(self, session=None):
-        return session.query(providers).order_by(providers.created_date.desc()).all()
+        return session.query(providers).filter_by(enable='True').order_by(providers.created_date.desc()).all()
