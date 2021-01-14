@@ -34,18 +34,7 @@ def index():
 def get():
     try:
         provider_service_obj = ProviderService()
-        providers = {'providers': provider_service_obj.get_all_providers()}
-        response = json.dumps(providers)
-    except Exception as e:
-        response = Response(status=500, mimetype='application/json')
-
-    return response
-
-@bp.route('/api/providers/home', methods=['GET'])
-def get_home_config():
-    try:
-        provider_service_obj = ProviderService()
-        providers = {'providers': provider_service_obj.get_all_providers()}
+        providers = provider_service_obj.get_all_providers()
         response = json.dumps(providers)
     except Exception as e:
         response = Response(status=500, mimetype='application/json')
