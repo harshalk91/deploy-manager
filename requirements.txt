@@ -1,0 +1,10 @@
+flask
+celery
+Flask-API
+pymongo
+python_terraform
+redis
+pyyaml
+sqlalchemy
+mysqlclient
+ansible==2.9.13
