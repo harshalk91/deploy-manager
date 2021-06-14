@@ -1,7 +1,0 @@
-flask
-celery
-Flask-API
-pymongo
-python_terraform
-redis
-ansible==2.9.13
